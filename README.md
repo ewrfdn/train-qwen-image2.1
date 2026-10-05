@@ -7,17 +7,34 @@
 
 ```
 train-qwen2.1-image/
-├── ai-toolkit/            # 训练引擎（ostris/ai-toolkit + venv）
+├── ai-toolkit/            # 训练引擎（ostris/ai-toolkit + venv，setup_env.sh 生成）
 │   └── models/            # 软链 ComfyUI 权重（三件套，勿删）
 ├── src/
+│   ├── setup_env.sh       # 环境初始化（幂等，可重复运行）
 │   ├── train.sh           # 一键训练入口
 │   └── validate_dataset.py# 训练前数据集校验
 ├── config/
 │   └── train_lora_qwen_image_21_spark.yaml   # 主配置（改 folder_path 后即可训）
+├── requirements-frozen.txt# 依赖快照（pip freeze，参考/校验用）
 ├── datasets/              # 训练数据，每个 LoRA 一个子目录
 ├── output/                # checkpoint + 采样图输出
 └── .deps/                 # python3.12-dev 头文件（triton JIT 需要，无 root 方案）
 ```
+
+## 环境初始化（首次 / 重建）
+
+```bash
+./src/setup_env.sh
+```
+
+脚本幂等，做六件事：clone ai-toolkit（锁定 commit `ecee894`）→ venv + torch 2.13.0+cu130
+（ARM64）→ requirements → 软链 ComfyUI 三件套权重（零下载）→ 解包 python3.12 头文件到
+`.deps/`（无 root，供 triton JIT）→ 验证 CUDA。
+
+依赖版本定义：
+- ai-toolkit commit：见 `src/setup_env.sh` 顶部 `AI_TOOLKIT_COMMIT`
+- 完整冻结快照：`requirements-frozen.txt`（重建后可 `pip freeze | diff` 校验一致性）
+- 关键版本：torch 2.13.0+cu130 / transformers 5.5.3 / diffusers(git pin) / triton 3.7.1
 
 ## 如何启动训练
 

@@ -8,7 +8,7 @@
 
 job: extension
 config:
-  name: "my_character_lora_v1"
+  name: "bocchi_lora_v3"
   process:
     - type: 'sd_trainer'
       training_folder: "/home/sakana/workspace/train-qwen2.1-image/output"
@@ -60,9 +60,10 @@ config:
         width: 1024
         height: 1024
         prompts:
-          - "bocchi 在咖啡店靠窗的位置看书，午后暖色阳光"
-          - "bocchi 穿粉色运动外套走在夜晚的街道上，霓虹灯反射"
-          - "bocchi 的面部特写，微笑，摄影棚柔光，白色背景"
+          # 采样 prompt 与 caption 触发词及描述风格保持一致（唯一触发词：bocchi）
+          - "bocchi，全身，正面视角，穿粉色立领运动服和黑色中筒袜，背着黑色吉他包，站在放学后的街道上，夕阳橙红色天空，樱花花瓣飘落，二次元动漫风格"
+          - "bocchi，上半身，侧面视角，穿带白色条纹的粉色运动服，怀抱黑色电吉他，微微低头，背景为舞台，蓝色聚光灯照射，演唱会现场氛围，二次元动漫风格"
+          - "bocchi，面部特写，正面视角，脸红害羞，眼神躲闪，嘴巴微张，脸颊挂着汗珠，背景为浅粉色纯色，柔和光晕，二次元动漫风格"
         neg: ""
         seed: 42
         walk_seed: true

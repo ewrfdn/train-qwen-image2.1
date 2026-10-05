@@ -1,0 +1,95 @@
+# Qwen-Image-2.1 人物 LoRA — DGX Spark 专用配置
+# 基于 ai-toolkit 官方示例改编，针对 Spark 128GB 统一内存调整：
+#   - 不需要量化（24GB 显卡才需要 uint3/qfloat8 那套）
+#   - 权重源用 Comfy-Org 重打包，configs/processor 自动从 Qwen 官方仓库解析
+#     （大权重文件已软链到 ai-toolkit/models/，本地命中即用，不会下载）
+#
+# 用法：改 folder_path → ./src/train.sh config/train_lora_qwen_image_21_spark.yaml
+
+job: extension
+config:
+  name: "bocchi_lora_v4"
+  process:
+    - type: 'sd_trainer'
+      training_folder: "/home/sakana/workspace/train-qwen2.1-image/output"
+      device: cuda:0
+
+      network:
+        type: "lora"
+        linear: 16          # 人物 LoRA rank 16 够用；风格类可上 32
+        linear_alpha: 16
+
+      save:
+        dtype: float16
+        save_every: 250
+        max_step_saves_to_keep: 13
+
+      datasets:
+        - folder_path: "/home/sakana/workspace/train-qwen2.1-image/datasets/bocchi"   # ← 改成你的数据集路径
+          caption_ext: "txt"
+          # 注意：cache_text_embeddings: true 时 caption_dropout_rate 静默失效（源码行为），留着无害
+          caption_dropout_rate: 0.05
+          shuffle_tokens: false
+          cache_latents_to_disk: true
+          resolution: [ 768, 1024, 1280 ]   # 对照测试更高训练尺度
+
+      train:
+        batch_size: 1
+        steps: 3000          # 每 250 步保存并检查采样，最终选择最佳 checkpoint
+        gradient_accumulation: 1
+        train_unet: true
+        train_text_encoder: false   # Qwen3-VL-8B 文本编码器不训
+        gradient_checkpointing: true
+        noise_scheduler: "flowmatch"
+        optimizer: "adamw8bit"
+        lr: 1e-4
+        cache_text_embeddings: true   # 8B 编码器只跑一遍，省大量计算
+        dtype: bf16
+
+      model:
+        name_or_path: "Comfy-Org/Qwen-Image-2.1"   # 权重源（重打包）
+        arch: "qwen_image_2"
+        # Spark 128GB 统一内存：关闭量化，全精度训
+        quantize: false
+        low_vram: false
+
+      sample:
+        sampler: "flowmatch"
+        sample_every: 250
+        sample_start_step: 0
+        width: 1024
+        height: 1024
+        samples:
+          - prompt: "bocchi，全身，正面视角，穿粉色立领运动服和黑色中筒袜，背着黑色吉他包，站在放学后的街道上，夕阳橙红色天空，樱花花瓣飘落，二次元动漫风格"
+            width: 832
+            height: 1216
+            seed: 42
+          - prompt: "bocchi，上半身，侧面视角，穿带白色条纹的粉色运动服，怀抱黑色电吉他，微微低头，背景为舞台，蓝色聚光灯照射，演唱会现场氛围，二次元动漫风格"
+            width: 1216
+            height: 832
+            seed: 43
+          - prompt: "bocchi，面部特写，正面视角，脸红害羞，眼神躲闪，嘴巴微张，脸颊挂着汗珠，背景为浅粉色纯色，柔和光晕，二次元动漫风格"
+            width: 1024
+            height: 1024
+            seed: 44
+          - prompt: "bocchi，全身，双脚入镜，正面站立，双臂自然下垂，穿白色衬衫和深色百褶裙，浅灰色背景，均匀柔和光照，二次元动漫风格"
+            width: 768
+            height: 1344
+            seed: 45
+          - prompt: "bocchi，上半身，正面视角，一只手在肩旁张开挥手，手掌朝向镜头，另一只手自然下垂，穿粉色运动外套，浅灰色背景，均匀柔和光照，二次元动漫风格"
+            width: 1152
+            height: 864
+            seed: 46
+          - prompt: "bocchi，上半身，四分之三正面视角，坐在桌前，一只手握住白色杯子的把手，另一只手放在桌面上，穿蓝色针织衫，明亮的咖啡店背景，二次元动漫风格"
+            width: 1344
+            height: 768
+            seed: 47
+        neg: ""
+        seed: 42
+        walk_seed: true
+        guidance_scale: 3
+        sample_steps: 25
+
+meta:
+  name: "[name]"
+  version: '1.0'

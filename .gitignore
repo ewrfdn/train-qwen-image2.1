@@ -1,0 +1,16 @@
+ai-toolkit/
+datasets/
+output/
+logs/
+.deps/
+
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+*.pid
+*.log
+.DS_Store
+Thumbs.db
